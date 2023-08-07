@@ -112,42 +112,69 @@ public class Main extends JFrame {
    * スプライン曲線を求め、描画を行う.
    */
   public void drawSplineCurve() {
+    double L = 0;
+    for (int i = 0; i<m_points.size()-1; i++){
+      L += distance(m_points.get(i).x(),m_points.get(i+1).x(),m_points.get(i).y(),m_points.get(i+1).y());
+    }
+
 
     // ---------- ↓knotを指定しない場合↓ (節点間隔に合わせて節点列を自動で生成) ----------
     // 分かりやすいように時刻パラメータを0から始まるようにシフトしておく.
-    List<Point> shiftedPoints = shiftPointsTimeZero();
+    Range timeRange = Range.create(0.0, L);
+//    // 点列の時系列を正規化する.
+    List<Point> normalizedPoints = normalizePoints(timeRange);
+
+    List<Double> disList = new ArrayList<>();
+    double dis = 0.0;
+    for (int i = 0; i < m_points.size() - 1;i++){
+      if (i == 0){
+        disList.add(0.0);
+      }
+      else {
+        dis += distance(m_points.get(i-1).x(),m_points.get(i).x(),m_points.get(i-1).y(),m_points.get(i).y());
+        disList.add(dis);
+      }
+      //System.out.println(disList.get(i));
+    }
+
+    for (int i = 0; i < m_points.size() - 1; i++){
+      normalizedPoints.set(i,Point.createXYT(normalizedPoints.get(i).x(),normalizedPoints.get(i).y(),disList.get(i)));
+    }
+
+
     // リストを配列に変換する.
-    Point[] points = shiftedPoints.toArray(new Point[0]);
+    Point[] points = normalizedPoints.toArray(new Point[0]);
 
     // 次数
     int degree = 3;
 
     // 節点間隔
-    double knotInterval = 0.1;
+    //double knotInterval = L/10;
+    double[] knot = new double[]{-0.2, -0.1, 0.0,L/2 ,(L/10)*6,(L/10)*7,(L/10)*8, (L/10)*9, L,L+10, L+20};
 
     // スプライン補間を行う
     // SplineCurveInterpolator.interpolateの引数は(点列(Point[]型), 次数(int型), 節点間隔(double型))にする.
-    SplineCurve splineCurve = SplineCurveInterpolator.interpolate(points, degree, knotInterval);
+    SplineCurve splineCurve = SplineCurveInterpolator.interpolate(points, degree, knot);
     // ---------- ↑knotを指定しない場合↑ (節点間隔に合わせて節点列を自動で生成) ----------
 
 
-//    // ++++++++++ ↓knotを指定する場合↓ ++++++++++
-//    // 時刻パラメータを正規化しておくと節点を自分で定義しやすい.
-//    Range timeRange = Range.create(0.0, 1.0);
-//    // 点列の時系列を正規化する.
+////    // ++++++++++ ↓knotを指定する場合↓ ++++++++++
+////    // 時刻パラメータを正規化しておくと節点を自分で定義しやすい.
+//    Range timeRange = Range.create(0.0, L);
+////    // 点列の時系列を正規化する.
 //    List<Point> normalizedPoints = normalizePoints(timeRange);
-//    // リストを配列に変換する.
+////    // リストを配列に変換する.
 //    Point[] points = normalizedPoints.toArray(new Point[0]);
-//
-//    // 次数
+////
+////    // 次数
 //    int degree = 3;
-//
-//    // 節点を定義する.
-//    double[] knot = new double[]{-0.4, -0.2, 0.0, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4};
-//    // スプライン補間を行う
-//    //SplineCurveInterpolator.interpolateの引数は(点列(Point[]型), 次数(int型), 節点列(double[]型))
+////
+////    // 節点を定義する.
+//    double[] knot = new double[]{-0.2, -0.1, 0.0,L/2 ,(L/10)*6,(L/10)*7,(L/10)*8, (L/10)*9, L,L+10, L+20};
+////    // スプライン補間を行う
+////    //SplineCurveInterpolator.interpolateの引数は(点列(Point[]型), 次数(int型), 節点列(double[]型))
 //    SplineCurve splineCurve = SplineCurveInterpolator.interpolate(points, degree, knot);
-//    // ++++++++++ ↑knotを指定する場合↑ ++++++++++
+////    // ++++++++++ ↑knotを指定する場合↑ ++++++++++
 
 
     // スプライン曲線の評価点を求める↓
@@ -155,15 +182,37 @@ public class Main extends JFrame {
     double end = splineCurve.range().end();
     List<Point> evaluateList = new ArrayList<>();
 
-    for (double t = start; t < end; t += 0.01) {
-      evaluateList.add(splineCurve.evaluate(t));
+
+
+//      for (int i = 0; i < m_points.size() - 1; i++){
+//        evaluateList.add(splineCurve.evaluate(disList.get(i)));
+//      }
+
+     for (double t = start; t < end; t += 0.01) {
+       evaluateList.add(splineCurve.evaluate(t));
     }
+
 
     // SplineCurveの描画
     for (int i = 1; i < evaluateList.size(); i++) {
       drawLine(evaluateList.get(i-1), evaluateList.get(i), Color.RED);
     }
 
+    Point[] controlList = splineCurve.controlPoints();
+    for (int i = 0; i< controlList.length ;i++){
+      drawPoint(controlList[i].x(),controlList[i].y(),3,Color.blue);
+    }
+    for (int i = 1; i <= controlList.length - 1; i++) {
+      drawLine(controlList[i-1],controlList[i] , Color.blue);
+    }
+    System.out.println(L);
+  }
+
+  public double distance(double _x1, double _x2, double _y1, double _y2){
+    double X = _x2 - _x1;
+    double Y = _y2 - _y1;
+    double L = Math.sqrt(Math.pow(X, 2) + Math.pow(Y, 2));
+    return L;
   }
 
   /**
