@@ -13,6 +13,7 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
@@ -112,14 +113,28 @@ public class Main extends JFrame {
    * スプライン曲線を求め、描画を行う.
    */
   public void drawSplineCurve() {
+    //Lに距離を足してく、Lは全長
     double L = 0;
-    for (int i = 0; i<m_points.size()-1; i++){
-      L += distance(m_points.get(i).x(),m_points.get(i+1).x(),m_points.get(i).y(),m_points.get(i+1).y());
+    for (int i=0; i<m_points.size()-1; i++){
+      L += distance(m_points.get(i).x(), m_points.get(i+1).x(), m_points.get(i).y(), m_points.get(i+1).y());
     }
 
-    //距離を合計したリスト
-    double dis = 0.0;
+
+    // ---------- ↓knotを指定しない場合↓ (節点間隔に合わせて節点列を自動で生成) ----------
+    // 弧長パラメータを0から始まるようにシフトしておく.
+    Range lRange = Range.create(0.0, L);
+    // 点列の時系列を正規化する.
+    List<Point> normalizedPoints = normalizePoints(lRange);
+    //shiftedPointsに時刻を入れて表示する
+    List<Point> shiftedPoints = shiftPointsTimeZero();
+    for(int i=0; i<shiftedPoints.size(); i++){
+      System.out.println(shiftedPoints.get(i));
+    }
+
+
+    //disListに距離入れてく
     List<Double> disList = new ArrayList<>();
+    double dis = 0.0;
     for (int i = 0; i < m_points.size() - 1;i++){
       if (i == 0){
         disList.add(0.0);
@@ -128,49 +143,14 @@ public class Main extends JFrame {
         dis += distance(m_points.get(i-1).x(),m_points.get(i).x(),m_points.get(i-1).y(),m_points.get(i).y());
         disList.add(dis);
       }
-      System.out.println(disList.get(i));
+      //System.out.println(disList.get(i));
     }
 
-    // ---------- ↓knotを指定しない場合↓ (節点間隔に合わせて節点列を自動で生成) ----------
-    // 分かりやすいように時刻パラメータを0から始まるようにシフトしておく.
-    Range LRange = Range.create(0.0, L);
-//    // 点列の時系列を正規化する.
-    List<Point> normalizedPoints = normalizePoints(LRange);
-    List<Point> shiftedPoints = shiftPointsTimeZero();
-    //System.out.println(shiftedPoints.get(3).time());
-    for (int i = 0; i< shiftedPoints.size(); i++) {
-      System.out.println(shiftedPoints.get(i));
-    }
-
-    List<Double> kotyolist = new ArrayList<>();
-    for (int i = 0; i<shiftedPoints.size()-1;i++){
-      for(int n = 0; n <=100; n++){
-        if((Math.floor(shiftedPoints.get(i+1).time()*10)/10)-(Math.floor(shiftedPoints.get(i).time()*10)/10) < 0.5){
-          if(shiftedPoints.get(i).time() <= 0.1 * n && 0.1 * n < shiftedPoints.get(i+1).time()) {
-            double a = (shiftedPoints.get(i + 1).time() - 0.1 * n) / (shiftedPoints.get(i + 1).time() - shiftedPoints.get(i).time());
-            double b = (0.1 * n - shiftedPoints.get(i).time()) / (shiftedPoints.get(i + 1).time() - shiftedPoints.get(i).time());
-            double v = a * disList.get(i) + b * disList.get(i + 1);
-            kotyolist.add(v);
-            System.out.println(v);
-          }
-        }
-      }
-    }
-
-    //kotyolistをdouble配列に代入
-    double[] knot2 = new double[kotyolist.size()+5];
-    knot2[0] = 0;
-    knot2[1] = 0;
-    for(int i=0;i<kotyolist.size();i++){
-      knot2[i+2]= kotyolist.get(i);
-    }
-    knot2[kotyolist.size()+2] = L;
-    knot2[kotyolist.size()+3] = L;
-    knot2[kotyolist.size()+4] = L;
-
+    //disListのi番目のx, y, 距離をnormalizedPointsにsetする
     for (int i = 0; i < m_points.size() - 1; i++){
-      normalizedPoints.set(i,Point.createXYT(normalizedPoints.get(i).x(),normalizedPoints.get(i).y(),disList.get(i)));
+      normalizedPoints.set(i, Point.createXYT(normalizedPoints.get(i).x(), normalizedPoints.get(i).y(), disList.get(i)));
     }
+
 
     // リストを配列に変換する.
     Point[] points = normalizedPoints.toArray(new Point[0]);
@@ -178,13 +158,41 @@ public class Main extends JFrame {
     // 次数
     int degree = 3;
 
+
+    List<Double> kotyoList = new ArrayList<>();
+    for(int j=0; j<shiftedPoints.size()-1; j++){
+      for(int n=0; n<=100; n++) {
+        if((Math.floor(shiftedPoints.get(j+1).time()*10)/10) - (Math.floor(shiftedPoints.get(j).time()*10)/10) < 0.5) {
+          if (shiftedPoints.get(j).time() <= 0.1 * n && 0.1 * n < shiftedPoints.get(j + 1).time()) {
+            double a = (shiftedPoints.get(j + 1).time() - 0.1 * n) / (shiftedPoints.get(j + 1).time() - shiftedPoints.get(j).time());  //比
+            double b = (0.1 * n - shiftedPoints.get(j).time()) / (shiftedPoints.get(j + 1).time() - shiftedPoints.get(j).time());      //比
+            double v = a * disList.get(j) + b * disList.get(j + 1);                                                                  //距離
+            kotyoList.add(v);
+          }
+        }
+      }
+    }
+    System.out.println(kotyoList);
+
+    double[] knot_2;
+    knot_2 = new double[kotyoList.size()+5];
+    knot_2[0] = 0.0;
+    knot_2[1] = 0.0;
+    for(int i=0; i< kotyoList.size(); i++){
+      knot_2[i+2] = kotyoList.get(i);
+    }
+    knot_2[kotyoList.size()+2] = L;
+    knot_2[kotyoList.size()+3] = L;
+    knot_2[kotyoList.size()+4] = L;
+
+
     // 節点間隔
-    double knotInterval = L/10;
+    //double knotInterval = L/10;
     //double[] knot = new double[]{-0.2, -0.1, 0.0,L/2 ,(L/10)*6,(L/10)*7,(L/10)*8, (L/10)*9, L,L+10, L+20};
 
     // スプライン補間を行う
     // SplineCurveInterpolator.interpolateの引数は(点列(Point[]型), 次数(int型), 節点間隔(double型))にする.
-    SplineCurve splineCurve = SplineCurveInterpolator.interpolate(points, degree, knot2);
+    SplineCurve splineCurve = SplineCurveInterpolator.interpolate(points, degree, knot_2);
     // ---------- ↑knotを指定しない場合↑ (節点間隔に合わせて節点列を自動で生成) ----------
 
 
@@ -218,8 +226,8 @@ public class Main extends JFrame {
 //        evaluateList.add(splineCurve.evaluate(disList.get(i)));
 //      }
 
-     for (double t = start; t < end; t += 0.01) {
-       evaluateList.add(splineCurve.evaluate(t));
+    for (double t = start; t < end; t += 0.01) {
+      evaluateList.add(splineCurve.evaluate(t));
     }
 
 
@@ -232,9 +240,9 @@ public class Main extends JFrame {
     for (int i = 0; i< controlList.length ;i++){
       drawPoint(controlList[i].x(),controlList[i].y(),3,Color.blue);
     }
-//    for (int i = 1; i <= controlList.length - 1; i++) {
-//      drawLine(controlList[i-1],controlList[i] , Color.blue);
-//    }
+    for (int i = 1; i <= controlList.length - 1; i++) {
+      drawLine(controlList[i-1],controlList[i] , Color.blue);
+    }
     //System.out.println(L);
   }
 
