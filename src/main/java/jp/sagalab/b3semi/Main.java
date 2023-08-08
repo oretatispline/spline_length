@@ -135,12 +135,12 @@ public class Main extends JFrame {
     //disListに距離入れてく
     List<Double> disList = new ArrayList<>();
     double dis = 0.0;
-    for (int i = 0; i < m_points.size() - 1;i++){
+    for (int i=0; i<m_points.size(); i++){
       if (i == 0){
         disList.add(0.0);
       }
       else {
-        dis += distance(m_points.get(i-1).x(),m_points.get(i).x(),m_points.get(i-1).y(),m_points.get(i).y());
+        dis += distance(m_points.get(i-1).x(), m_points.get(i).x(), m_points.get(i-1).y(), m_points.get(i).y());
         disList.add(dis);
       }
       //System.out.println(disList.get(i));
