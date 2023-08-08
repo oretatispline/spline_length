@@ -139,6 +139,7 @@ public final class SplineCurveInterpolator {
 
     // 重み行列の生成
     Matrix wmat = createWeightMatrix(_points, _degree, _knots);
+    System.out.println(wmat);
 
     // 制御点列の導出
     Point[] controlPoints = calculateControlPoints(wmat, _points);

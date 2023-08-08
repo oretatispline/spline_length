@@ -149,12 +149,12 @@ public class Main extends JFrame {
     int degree = 3;
 
     // 節点間隔
-    //double knotInterval = L/10;
-    double[] knot = new double[]{-0.2, -0.1, 0.0,L/2 ,(L/10)*6,(L/10)*7,(L/10)*8, (L/10)*9, L,L+10, L+20};
+    double knotInterval = L/10;
+    //double[] knot = new double[]{-0.2, -0.1, 0.0,L/2 ,(L/10)*6,(L/10)*7,(L/10)*8, (L/10)*9, L,L+10, L+20};
 
     // スプライン補間を行う
     // SplineCurveInterpolator.interpolateの引数は(点列(Point[]型), 次数(int型), 節点間隔(double型))にする.
-    SplineCurve splineCurve = SplineCurveInterpolator.interpolate(points, degree, knot);
+    SplineCurve splineCurve = SplineCurveInterpolator.interpolate(points, degree, knotInterval);
     // ---------- ↑knotを指定しない場合↑ (節点間隔に合わせて節点列を自動で生成) ----------
 
 
@@ -202,9 +202,9 @@ public class Main extends JFrame {
     for (int i = 0; i< controlList.length ;i++){
       drawPoint(controlList[i].x(),controlList[i].y(),3,Color.blue);
     }
-    for (int i = 1; i <= controlList.length - 1; i++) {
-      drawLine(controlList[i-1],controlList[i] , Color.blue);
-    }
+//    for (int i = 1; i <= controlList.length - 1; i++) {
+//      drawLine(controlList[i-1],controlList[i] , Color.blue);
+//    }
     System.out.println(L);
   }
 
