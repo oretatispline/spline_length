@@ -1,13 +1,13 @@
 package jp.sagalab.b3semi.io.csv;
 
-import jp.sagalab.b3semi.Point;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import jp.sagalab.jftk.Point;
 
 /**
  * CSVファイルの読み取りを行うクラスです.

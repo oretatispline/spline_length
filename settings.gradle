@@ -1,2 +1,4 @@
 rootProject.name = 'B3Zemi2022_SplineCurveInterpolation'
+include(":jftk")
+include(":jflib")
 

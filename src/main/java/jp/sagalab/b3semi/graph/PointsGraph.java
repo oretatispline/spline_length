@@ -1,10 +1,10 @@
 package jp.sagalab.b3semi.graph;
 
-import jp.sagalab.b3semi.Point;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Line2D;
+
+import jp.sagalab.jftk.Point;
 
 /**
  * 点列と節点列を表すグラフを作成するクラスです.

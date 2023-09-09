@@ -4,6 +4,11 @@ import jp.sagalab.b3semi.graph.PointsGraph;
 import jp.sagalab.b3semi.io.csv.ReadCSV;
 import jp.sagalab.b3semi.io.csv.WriteToCSV;
 
+import jp.sagalab.jftk.Point;
+import jp.sagalab.jftk.curve.interporation.ConstrainedSplineCurveInterpolator;
+import jp.sagalab.jftk.curve.Range;
+import jp.sagalab.jftk.curve.SplineCurve;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -34,7 +39,7 @@ public class Main extends JFrame {
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     m_canvas.setSize(800, 600);
     m_canvas.setBackground(Color.WHITE);
-    setTitle("b3zemi");
+    setTitle("NonUniformConstrainedSplineCurveInterpolator");
 
     // 入力点列を保存する"save points"ボタン
     JButton savePoints = new JButton("save points");
@@ -120,7 +125,7 @@ public class Main extends JFrame {
     //距離を合計したリスト
     double dis = 0.0;
     List<Double> disList = new ArrayList<>();
-    for (int i = 0; i < m_points.size() - 1;i++){
+    for (int i = 0; i < m_points.size();i++){
       if (i == 0){
         disList.add(0.0);
       }
@@ -184,7 +189,10 @@ public class Main extends JFrame {
 
     // スプライン補間を行う
     // SplineCurveInterpolator.interpolateの引数は(点列(Point[]型), 次数(int型), 節点間隔(double型))にする.
-    SplineCurve splineCurve = SplineCurveInterpolator.interpolate(points, degree, knot2);
+    SplineCurve splineCurve = NonUniformConstrainedSplineCurveInterpolator.interpolate(points, degree, knot2);
+
+    //稲垣さんのスプライン補間
+    //jp.sagalab.jftk.curve.SplineCurve splineCurve2 = ConstrainedSplineCurveInterpolator.interpolate(points,degree,0.1);
     // ---------- ↑knotを指定しない場合↑ (節点間隔に合わせて節点列を自動で生成) ----------
 
 
