@@ -4,6 +4,8 @@ import jp.sagalab.b3semi.graph.PointsGraph;
 import jp.sagalab.b3semi.io.csv.ReadCSV;
 import jp.sagalab.b3semi.io.csv.WriteToCSV;
 
+import jp.sagalab.jftk.Point;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -36,6 +38,7 @@ public class Main extends JFrame {
     m_canvas.setSize(800, 600);
     m_canvas.setBackground(Color.WHITE);
     setTitle("b3zemi");
+
 
     // 入力点列を保存する"save points"ボタン
     JButton savePoints = new JButton("save points");
@@ -96,6 +99,8 @@ public class Main extends JFrame {
                 Point point = Point.createXYT(e.getX(), e.getY(), System.currentTimeMillis() * 0.001);
                 m_points.add(point);
                 drawPoint(point.x(), point.y(), 1.5, Color.BLACK);
+                drawPoint(S.x(), S.y(), 10, Color.GREEN);
+                drawPoint(E.x(), E.y(), 10, Color.ORANGE);
               }
             }
     );
@@ -119,18 +124,15 @@ public class Main extends JFrame {
       L += distance(m_points.get(i).x(), m_points.get(i+1).x(), m_points.get(i).y(), m_points.get(i+1).y());
     }
 
-
-    // ---------- ↓knotを指定しない場合↓ (節点間隔に合わせて節点列を自動で生成) ----------
     // 弧長パラメータを0から始まるようにシフトしておく.
     Range lRange = Range.create(0.0, L);
     // 点列の時系列を正規化する.
     List<Point> normalizedPoints = normalizePoints(lRange);
     //shiftedPointsに時刻を入れて表示する
     List<Point> shiftedPoints = shiftPointsTimeZero();
-    for(int i=0; i<shiftedPoints.size(); i++){
-      System.out.println(shiftedPoints.get(i));
-    }
-
+//    for(int i=0; i<shiftedPoints.size(); i++){
+//      System.out.println(shiftedPoints.get(i));    //表示
+//    }
 
     //disListに距離入れてく
     List<Double> disList = new ArrayList<>();
@@ -143,23 +145,31 @@ public class Main extends JFrame {
         dis += distance(m_points.get(i-1).x(), m_points.get(i).x(), m_points.get(i-1).y(), m_points.get(i).y());
         disList.add(dis);
       }
-      //System.out.println(disList.get(i));
+//      System.out.println(disList.get(i));     //表示
     }
+
+    double Ls = distance(m_points.get(0).x(), S.x(), m_points.get(0).y(), S.y());
+    double Le = distance(m_points.get(m_points.size()-1).x(), E.x(), m_points.get(m_points.size()-1).y(), E.y());
 
     //disListのi番目のx, y, 距離をnormalizedPointsにsetする
     for (int i = 0; i < m_points.size() - 1; i++){
       normalizedPoints.set(i, Point.createXYT(normalizedPoints.get(i).x(), normalizedPoints.get(i).y(), disList.get(i)));
     }
+    normalizedPoints.add(0, Point.createXYT(S.x(), S.y(), -Ls));
+    normalizedPoints.add(Point.createXYT(E.x(), E.y(), L+Le-0.000001));
 
 
     // リストを配列に変換する.
     Point[] points = normalizedPoints.toArray(new Point[0]);
+//    for(int i=0; i<points.length; i++){
+//      System.out.println(points[i]);   //表示
+//    }
 
     // 次数
     int degree = 3;
 
-
     List<Double> kotyoList = new ArrayList<>();
+    kotyoList.add(-Ls);
     for(int j=0; j<shiftedPoints.size()-1; j++){
       for(int n=0; n<=100; n++) {
         if((Math.floor(shiftedPoints.get(j+1).time()*10)/10) - (Math.floor(shiftedPoints.get(j).time()*10)/10) < 0.5) {
@@ -172,47 +182,28 @@ public class Main extends JFrame {
         }
       }
     }
-    System.out.println(kotyoList);
+    //kotyoList.add(L);
+    kotyoList.add(L+Le);
+
 
     double[] knot_2;
-    knot_2 = new double[kotyoList.size()+5];
-    knot_2[0] = 0.0;
-    knot_2[1] = 0.0;
+    knot_2 = new double[kotyoList.size()+4];
+    knot_2[0] = -Ls;
+    knot_2[1] = -Ls;
     for(int i=0; i< kotyoList.size(); i++){
       knot_2[i+2] = kotyoList.get(i);
     }
-    knot_2[kotyoList.size()+2] = L;
-    knot_2[kotyoList.size()+3] = L;
-    knot_2[kotyoList.size()+4] = L;
+    knot_2[kotyoList.size()+2] = L+Le;
+    knot_2[kotyoList.size()+3] = L+Le;
 
+//    for(int i=0; i<knot_2.length; i++){
+//      System.out.println(knot_2[i]);    //表示
+//    }
 
-    // 節点間隔
-    //double knotInterval = L/10;
-    //double[] knot = new double[]{-0.2, -0.1, 0.0,L/2 ,(L/10)*6,(L/10)*7,(L/10)*8, (L/10)*9, L,L+10, L+20};
 
     // スプライン補間を行う
     // SplineCurveInterpolator.interpolateの引数は(点列(Point[]型), 次数(int型), 節点間隔(double型))にする.
     SplineCurve splineCurve = SplineCurveInterpolator.interpolate(points, degree, knot_2);
-    // ---------- ↑knotを指定しない場合↑ (節点間隔に合わせて節点列を自動で生成) ----------
-
-
-////    // ++++++++++ ↓knotを指定する場合↓ ++++++++++
-////    // 時刻パラメータを正規化しておくと節点を自分で定義しやすい.
-//    Range timeRange = Range.create(0.0, L);
-////    // 点列の時系列を正規化する.
-//    List<Point> normalizedPoints = normalizePoints(timeRange);
-////    // リストを配列に変換する.
-//    Point[] points = normalizedPoints.toArray(new Point[0]);
-////
-////    // 次数
-//    int degree = 3;
-////
-////    // 節点を定義する.
-//    double[] knot = new double[]{-0.2, -0.1, 0.0,L/2 ,(L/10)*6,(L/10)*7,(L/10)*8, (L/10)*9, L,L+10, L+20};
-////    // スプライン補間を行う
-////    //SplineCurveInterpolator.interpolateの引数は(点列(Point[]型), 次数(int型), 節点列(double[]型))
-//    SplineCurve splineCurve = SplineCurveInterpolator.interpolate(points, degree, knot);
-////    // ++++++++++ ↑knotを指定する場合↑ ++++++++++
 
 
     // スプライン曲線の評価点を求める↓
@@ -220,11 +211,6 @@ public class Main extends JFrame {
     double end = splineCurve.range().end();
     List<Point> evaluateList = new ArrayList<>();
 
-
-
-//      for (int i = 0; i < m_points.size() - 1; i++){
-//        evaluateList.add(splineCurve.evaluate(disList.get(i)));
-//      }
 
     for (double t = start; t < end; t += 0.01) {
       evaluateList.add(splineCurve.evaluate(t));
@@ -243,7 +229,6 @@ public class Main extends JFrame {
     for (int i = 1; i <= controlList.length - 1; i++) {
       drawLine(controlList[i-1],controlList[i] , Color.blue);
     }
-    //System.out.println(L);
   }
 
   public double distance(double _x1, double _x2, double _y1, double _y2){
@@ -361,4 +346,7 @@ public class Main extends JFrame {
 
   /** ドラッグで打たれた点列を保持するリスト */
   private List<Point> m_points = new ArrayList<>();
+
+  private Point S = Point.createXY(200,200);
+  private Point E = Point.createXY(500, 500);
 }

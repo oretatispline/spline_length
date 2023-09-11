@@ -4,6 +4,8 @@ import jp.sagalab.b3semi.graph.PointsGraph;
 
 import java.util.Arrays;
 
+import jp.sagalab.jftk.Point;
+
 /**
  * スプライン曲線補間を行うためのクラスです。
  *
@@ -69,7 +71,7 @@ public final class SplineCurveInterpolator {
 
     // 重み行列の生成
     Matrix wmat = createWeightMatrix(_points, _degree, knots);
-    System.out.println(wmat);
+    //System.out.println(wmat);
 
     // 制御点列の導出
     Point[] controlPoints = calculateControlPoints(wmat, _points);

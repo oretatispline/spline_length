@@ -1,0 +1,6 @@
+[submodule "jftk"]
+	path = jftk
+	url = git@github.com:muit-islab/jftk.git
+[submodule "jflib"]
+	path = jflib
+	url = git@github.com:muit-islab/jflib.git

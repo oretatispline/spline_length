@@ -1,6 +1,7 @@
 package jp.sagalab.b3semi;
 
 import java.util.Arrays;
+import jp.sagalab.jftk.Point;
 
 /**
  * スプライン曲線を表すクラスです。
