@@ -148,13 +148,16 @@ public class Main extends JFrame {
 //      System.out.println(disList.get(i));     //表示
     }
 
+    //点Sから入力の1点目の距離Ls, 点Eから入力点の最後の点の距離Le
     double Ls = distance(m_points.get(0).x(), S.x(), m_points.get(0).y(), S.y());
     double Le = distance(m_points.get(m_points.size()-1).x(), E.x(), m_points.get(m_points.size()-1).y(), E.y());
 
     //disListのi番目のx, y, 距離をnormalizedPointsにsetする
+    //normalizedPointsの中身は(x, y, 距離)
     for (int i = 0; i < m_points.size() - 1; i++){
       normalizedPoints.set(i, Point.createXYT(normalizedPoints.get(i).x(), normalizedPoints.get(i).y(), disList.get(i)));
     }
+    //normalizedPointsに点S(s.x, s.y, -Ls), 点E(e.x, e.y, L+Le-0.000001)を加える
     normalizedPoints.add(0, Point.createXYT(S.x(), S.y(), -Ls));
     normalizedPoints.add(Point.createXYT(E.x(), E.y(), L+Le-0.000001));
 
@@ -168,6 +171,8 @@ public class Main extends JFrame {
     // 次数
     int degree = 3;
 
+    //kotyoListに距離を入れる
+    //[-Ls, 0, 0.1の距離, 0.2の距離, ... , L+Le]
     List<Double> kotyoList = new ArrayList<>();
     kotyoList.add(-Ls);
     for(int j=0; j<shiftedPoints.size()-1; j++){
@@ -186,6 +191,7 @@ public class Main extends JFrame {
     kotyoList.add(L+Le);
 
 
+    //knot_2はkotyoListと付加節点
     double[] knot_2;
     knot_2 = new double[kotyoList.size()+4];
     knot_2[0] = -Ls;
