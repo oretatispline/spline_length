@@ -137,6 +137,7 @@ public class Main extends JFrame {
     //disListに距離入れてく
     List<Double> disList = new ArrayList<>();
     double dis = 0.0;
+//    System.out.println("disList: ");        //表示
     for (int i=0; i<m_points.size(); i++){
       if (i == 0){
         disList.add(0.0);
@@ -151,6 +152,8 @@ public class Main extends JFrame {
     //点Sから入力の1点目の距離Ls, 点Eから入力点の最後の点の距離Le
     double Ls = distance(m_points.get(0).x(), S.x(), m_points.get(0).y(), S.y());
     double Le = distance(m_points.get(m_points.size()-1).x(), E.x(), m_points.get(m_points.size()-1).y(), E.y());
+//    System.out.println("Ls: " + Ls);         //Lsの表示
+//    System.out.println("L+Le: " + (L+Le));       //L+Leの表示
 
     //disListのi番目のx, y, 距離をnormalizedPointsにsetする
     //normalizedPointsの中身は(x, y, 距離)
@@ -164,6 +167,8 @@ public class Main extends JFrame {
 
     // リストを配列に変換する.
     Point[] points = normalizedPoints.toArray(new Point[0]);
+
+//    System.out.println("points(x, y, z, 距離, f):");
 //    for(int i=0; i<points.length; i++){
 //      System.out.println(points[i]);   //表示
 //    }
@@ -175,15 +180,16 @@ public class Main extends JFrame {
     //[-Ls, 0, 0.1の距離, 0.2の距離, ... , L+Le]
     List<Double> kotyoList = new ArrayList<>();
     kotyoList.add(-Ls);
-    for(int j=0; j<shiftedPoints.size()-1; j++){
-      for(int n=0; n<=100; n++) {
-        if((Math.floor(shiftedPoints.get(j+1).time()*10)/10) - (Math.floor(shiftedPoints.get(j).time()*10)/10) < 0.5) {
-          if (shiftedPoints.get(j).time() <= 0.1 * n && 0.1 * n < shiftedPoints.get(j + 1).time()) {
-            double a = (shiftedPoints.get(j + 1).time() - 0.1 * n) / (shiftedPoints.get(j + 1).time() - shiftedPoints.get(j).time());  //比
-            double b = (0.1 * n - shiftedPoints.get(j).time()) / (shiftedPoints.get(j + 1).time() - shiftedPoints.get(j).time());      //比
-            double v = a * disList.get(j) + b * disList.get(j + 1);                                                                  //距離
-            kotyoList.add(v);
-          }
+    for(double t=m_points.get(0).time(); t<=m_points.get(m_points.size()-1).time(); t+=0.1){
+      for(int i=0; i<=m_points.size()-1; i++){
+        if(m_points.get(i).time() > t){
+          double u = t - m_points.get(i-1).time();           //比
+          double v = m_points.get(i).time() - t;             //比
+          double a = disList.get(i-1);                       //距離
+          double b = disList.get(i);                         //距離
+          double d = (v*a + u*b)/(u + v);                    //内分
+          kotyoList.add(d);
+          break;
         }
       }
     }
@@ -194,16 +200,17 @@ public class Main extends JFrame {
     //knot_2はkotyoListと付加節点
     double[] knot_2;
     knot_2 = new double[kotyoList.size()+4];
-    knot_2[0] = -Ls;
-    knot_2[1] = -Ls;
+    knot_2[0] = kotyoList.get(0);
+    knot_2[1] = kotyoList.get(0);
     for(int i=0; i< kotyoList.size(); i++){
       knot_2[i+2] = kotyoList.get(i);
     }
-    knot_2[kotyoList.size()+2] = L+Le;
-    knot_2[kotyoList.size()+3] = L+Le;
+    knot_2[kotyoList.size()+2] = kotyoList.get(kotyoList.size()-1);
+    knot_2[kotyoList.size()+3] = kotyoList.get(kotyoList.size()-1);
 
+//    System.out.println("knot_2:");
 //    for(int i=0; i<knot_2.length; i++){
-//      System.out.println(knot_2[i]);    //表示
+//      System.out.println(knot_2[i]);          //knot_2の表示
 //    }
 
 
